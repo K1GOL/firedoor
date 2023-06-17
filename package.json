@@ -1,0 +1,20 @@
+{
+  "name": "firedoor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "K1GOL",
+  "license": "BSD-2-Clause",
+  "devDependencies": {
+    "standard": "^17.0.0"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "express": "^4.18.2",
+    "tweetnacl": "^1.0.3"
+  }
+}
