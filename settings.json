@@ -1,15 +1,12 @@
 {
   "webAuth": {
-    "port": 2265,
     "https": true,
     "users": {
       "username": {
         "password": "password",
         "timeout": 999999
       }
-    },
-    "maxFailCount": 3,
-    "cooldownMultiplier": 2
+    }
   },
   "nat": [
     {
@@ -20,34 +17,6 @@
       "to": {
         "host": "127.0.0.1",
         "port": 8000
-      }
-    },
-    {
-      "from": {
-        "port": 9080
-      },
-      "to": {
-        "host": "127.0.0.1",
-        "port": 80
-      }
-    },
-    {
-      "from": {
-        "port": 9099
-      },
-      "to": {
-        "host": "192.168.1.1",
-        "port": 80
-      }
-    },
-    {
-      "from": {
-        "host": "192.168.1.106",
-        "port": 9030
-      },
-      "to": {
-        "host": "192.168.1.106",
-        "port": 2265
       }
     }
   ],
@@ -62,26 +31,6 @@
       },
       "allow": true,
       "requireAuth": false
-    },
-    {
-      "local": {
-        "host": "192.168.1.106",
-        "port": 9030
-      },
-      "allow": true,
-      "requireAuth": false
-    },
-    {
-      "remote": {
-        "range": {
-          "start": "192.168.1.100",
-          "end": "192.168.1.255"
-        }
-      },
-      "local": {
-        "port": 9000
-      },
-      "allow": false
     }
   ]
 }

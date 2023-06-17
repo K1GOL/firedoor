@@ -30,7 +30,7 @@ Use the web authentication page (default port 2265) to allow traffic from your I
 
 ## Configuration
 
-Configure firedoor in the `settings.json` file.
+Configure firedoor in the `settings.json` file. The default `settings.json` includes some example configurations. Documentation of all possible options below.
 
 ```json
 {
@@ -60,7 +60,7 @@ Configure firedoor in the `settings.json` file.
     "cooldownMultiplier": 2 // How much the authentication cooldown will increase. Leave undefined for default (2).
   },
   "nat": [
-    // NAT rules, each rule as an object in this array.
+    // NAT rules, each rule as an object in this array. At least one NAT rule required.
     {
       "from": {
         "host": "192.168.1.106", // From this IP. Leave undefined for 0.0.0.0
