@@ -6,6 +6,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { createInterface } from 'readline'
 import { createServer } from 'https'
+import { createHash } from 'crypto'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -24,9 +25,9 @@ const authAttempts = {}
 
 // Define log file locations.
 const log = {
-  main: './log/log.txt',
-  connections: './log/connections.csv',
-  auth: './log/auth.csv'
+  main: path.join(__dirname, '/log/log.txt'),
+  connections: path.join(__dirname, '/log/connections.csv'),
+  auth: path.join(__dirname, '/log/auth.csv')
 }
 
 // Handle new incoming connection.
@@ -231,6 +232,65 @@ const startWebAuthServer = () => {
     res.sendFile(path.join(__dirname, '/webAuth.html'))
   })
 
+  // Send admin auth page.
+  webAuthServer.get('/admin/auth', function (req, res) {
+    const ip = ipvConvert(req.ip)
+    logger(`Admin page accessed from ${ip}.`)
+    res.sendFile(path.join(__dirname, '/admin.html'))
+  })
+
+  // Send logs via online admin auth panel.
+  webAuthServer.post('/admin/getLog', function (request, response) {
+    const ip = ipvConvert(request.ip)
+    logger(`Admin auth attempt for ${request.body.user}.`)
+
+    // Count failed attempts.
+    if (!authAttempts[ip]) {
+      authAttempts[ip] = { count: 0 }
+    }
+
+    // Calculate random cooldown based on failed attempts.
+    const multiplier = webAuthSettings.cooldownMultiplier ? webAuthSettings.cooldownMultiplier : 2
+    const maxFails = webAuthSettings.maxFailCount ? webAuthSettings.maxFailCount : 3
+
+    const maxCooldown = 3500 // Default max of random cooldown for no failed attempts.
+    const minCooldown = authAttempts[ip].count > maxFails ? authAttempts[ip].count * multiplier * 1000 : 1000
+    const cooldown = Math.max(minCooldown, Math.random() * maxCooldown)
+
+    setTimeout(() => {
+      // If username and password correct.
+      if (webAuthSettings.users[request.body.user] && webAuthSettings.users[request.body.user].password === sha256(request.body.pass) && webAuthSettings.users[request.body.user].admin) {
+        writeLogs()
+        if (request.body.target === 'mainLog' && existsSync(log.main)) response.sendFile(log.main)
+        else if (request.body.target === 'authLog' && existsSync(log.auth)) response.sendFile(log.auth)
+        else if (request.body.target === 'connLog' && existsSync(log.connections)) response.sendFile(log.connections)
+
+        const time = webAuthSettings.users[request.body.user].timeout ? webAuthSettings.users[request.body.user].timeout : 120
+        logger(`${request.body.user} requested ${request.body.target} from ${ip}.`)
+
+        authLog.push({
+          time: new Date().toString(),
+          timeout: time,
+          ip: request.ip,
+          target: 'admin',
+          success: true
+        })
+      } else {
+        // Incorrect username/password
+        response.send('Failed to authenticate.')
+        logger(`${request.body.user} failed to authenticate from ${ip}.`)
+        authLog.push({
+          time: new Date().toString(),
+          timeout: null,
+          ip: request.ip,
+          target: 'admin',
+          success: false
+        })
+        authAttempts[ip].count++
+      }
+    }, cooldown)
+  })
+
   // Process credentials.
   webAuthServer.post('/auth', function (request, response) {
     const ip = ipvConvert(request.ip)
@@ -251,23 +311,24 @@ const startWebAuthServer = () => {
 
     setTimeout(() => {
       // If username and password correct.
-      if (webAuthSettings.users[request.body.user] && webAuthSettings.users[request.body.user].password === request.body.pass) {
+      if (webAuthSettings.users[request.body.user] && webAuthSettings.users[request.body.user].password === sha256(request.body.pass)) {
         response.send('Authentication successful.')
         const time = webAuthSettings.users[request.body.user].timeout ? webAuthSettings.users[request.body.user].timeout : 240
-        logger(`${request.body.user} authenticated from ${ip} for ${time} seconds.`)
+        logger(`${request.body.user} authenticated from ${ip} for ${time} minutes.`)
         // Store IP address.
         authenticatedUsers.push(ip)
         authLog.push({
           time: new Date().toString(),
           timeout: time,
           ip: request.ip,
+          target: 'WebAuth',
           success: true
         })
         // Auth expiry.
         setTimeout(() => {
           authenticatedUsers.splice(authenticatedUsers.indexOf(request.body.user, 1))
           logger(`${request.body.user} authentication from ${ip} has expired.`)
-        }, time * 1000)
+        }, time * 1000 * 60)
       } else {
         // Incorrect username/password
         response.send('Failed to authenticate.')
@@ -276,12 +337,14 @@ const startWebAuthServer = () => {
           time: new Date().toString(),
           timeout: null,
           ip: request.ip,
+          target: 'WebAuth',
           success: false
         })
         authAttempts[ip].count++
       }
     }, cooldown)
   })
+
   // Serve gradientAnimator.
   webAuthServer.get('/gradientAnimator.js', (req, res) => { res.sendFile(path.join(__dirname, '/gradientAnimator.js')) })
   // Start listening.
@@ -335,7 +398,7 @@ setInterval(() => { writeLogs() }, 1800000)
 
 // Exports logs to file.
 const logsExporter = (logs, filePath) => {
-  if (!logs[0]) return // Check if log is empty.
+  if (logs.length === 0) return // Check if log is empty.
   let values = ''
   Object.keys(logs[0]).forEach(k => { values += `${k},` })
   let logsFile = existsSync(filePath) ? readFileSync(filePath) : values + '\r\n'
@@ -368,6 +431,10 @@ const logger = (message, error) => {
 const ipvConvert = (ip) => {
   if (ip.includes('::ffff:')) return ip.substring(7)
   else return ip
+}
+
+const sha256 = (input) => {
+  return createHash('sha256').update(input).digest('hex')
 }
 
 startWebAuthServer()

@@ -7,15 +7,16 @@ Simple firewall and NAT with username and password authentication.
 Requires Node.js and npm.
 
 ```sh
+git clone https://github.com/K1GOL/firedoor.git &&\
 npm i
 ```
 
-Run `certificateGenerator.sh` (Linux) to generate a self-signed certificate for web authentication HTTPS mode. 
+Run `sudo ./certificateGenerator.sh` (Linux) to generate a self-signed certificate for web authentication HTTPS mode. 
 
 ## Usage
 
 ```sh
-node index.js
+npm start
 ```
 
 While firedoor is running, use commands
@@ -28,11 +29,13 @@ While firedoor is running, use commands
 
 Use the web authentication page (default port 2265) to allow traffic from your IP address through the firewall.
 
+Access the admin panel at `<web authentication port>/admin/auth` to remotely view logs.
+
 ## Configuration
 
 Configure firedoor in the `settings.json` file. The default `settings.json` includes some example configurations. Documentation of all possible options below.
 
-```json
+```js
 {
   "webAuth": {
     // Options for the web authentication page.
@@ -46,13 +49,14 @@ Configure firedoor in the `settings.json` file. The default `settings.json` incl
     "users": {
       // Define credentials for authentication.
       "username1": {
-        // Key of this object is the username.
-        "password": "password1", // Password
-        "timeout": 120 // Authentication will time out after this many seconds (default 240).
+        // Name of this object is the username.
+        "password": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8", // Password sha256 hash in hexadecimal.
+        "timeout": 120, // Authentication will time out after this many minutes (default 120).
+        "admin": true // True if this user can access admin logs.
       },
       "username2": {
-        // Key of this object is the username.
-        "password": "password2", // Password
+        // Name of this object is the username.
+        "password": "c0e21a8ff85153deac82fe7f09c0da1b3bd90ac0ae204e78d7148753b4363c03", // Password sha256 hash in hexadecimal.
         "timeout": 240 // Authentication will time out after this many seconds (default 240).
       }
     },
