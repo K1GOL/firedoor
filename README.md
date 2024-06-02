@@ -57,11 +57,13 @@ Configure firedoor in the `settings.json` file. The default `settings.json` incl
       "username2": {
         // Name of this object is the username.
         "password": "c0e21a8ff85153deac82fe7f09c0da1b3bd90ac0ae204e78d7148753b4363c03", // Password sha256 hash in hexadecimal.
-        "timeout": 240 // Authentication will time out after this many seconds (default 240).
+        "timeout": 240 // Authentication will time out after this many minutes (default 240).
       }
     },
     "maxFailCount": 3, // Authentication attempts will start to be throttled after this many failed attempts. Leave undefined for default (3).
-    "cooldownMultiplier": 2 // How much the authentication cooldown will increase. Leave undefined for default (2).
+    "cooldownMultiplier": 2, // How much the authentication cooldown will increase. Leave undefined for default (2).
+    "title": "My cool authentication page!", // Set a title for the authentication page. Does not apply to admin auth page.
+    "redirect": "https://google.com" // Redirect to this URL after succesful authentication.
   },
   "nat": [
     // NAT rules, each rule as an object in this array. At least one NAT rule required.

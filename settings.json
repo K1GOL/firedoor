@@ -12,7 +12,9 @@
         "timeout": 999,
         "admin": true
       }
-    }
+    },
+    "title": "My cool authentication page!",
+    "redirect": "https://google.com"
   },
   "nat": [
     {

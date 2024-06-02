@@ -223,13 +223,24 @@ setInterval(() => { checkNatServers() }, 3000)
 
 // Starts web server for authentication
 const startWebAuthServer = () => {
+  // Create log files if they do not exist already.
+  if (!existsSync(log.main)) {
+    writeFileSync(log.main, '')
+  }
+  if (!existsSync(log.auth)) {
+    writeFileSync(log.auth, '')
+  }
+  if (!existsSync(log.connections)) {
+    writeFileSync(log.connections, '')
+  }
   // Create server.
   const webAuthServer = express()
   webAuthServer.use(bodyParser.json())
   webAuthServer.use(bodyParser.urlencoded({ extended: true }))
   // Send auth page.
   webAuthServer.get('/', function (req, res) {
-    res.sendFile(path.join(__dirname, '/webAuth.html'))
+    const file = readFileSync(path.join(__dirname, '/webAuth.html'), 'utf8')
+    res.send(file.replaceAll('#PAGE_TITLE#', webAuthSettings.title ? webAuthSettings.title : 'Firedoor Authentication'))
   })
 
   // Send admin auth page.
@@ -312,7 +323,9 @@ const startWebAuthServer = () => {
     setTimeout(() => {
       // If username and password correct.
       if (webAuthSettings.users[request.body.user] && webAuthSettings.users[request.body.user].password === sha256(request.body.pass)) {
-        response.send('Authentication successful.')
+        if (webAuthSettings.redirect) {
+          response.send(`Authentication successful. Redirecting... <script>setTimeout(() => { window.location.href = "${webAuthSettings.redirect}" }, 2000);</script>`)
+        } else response.send('Authentication successful.')
         const time = webAuthSettings.users[request.body.user].timeout ? webAuthSettings.users[request.body.user].timeout : 240
         logger(`${request.body.user} authenticated from ${ip} for ${time} minutes.`)
         // Store IP address.
